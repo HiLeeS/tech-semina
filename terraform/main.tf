@@ -6,8 +6,8 @@ locals {
   # team과 cost_center 조합이 올바른지 직접 검증
   validate_team_cost_center = (
     (var.team == "payment-team" && var.cost_center == "finops-001") ||
-    (var.team == "loan-team"    && var.cost_center == "finops-002") ||
-    (var.team == "auth-team"    && var.cost_center == "finops-003")
+    (var.team == "loan-team" && var.cost_center == "finops-002") ||
+    (var.team == "auth-team" && var.cost_center == "finops-003")
     ? true
     : tobool("ERROR: ${var.team}의 올바른 cost_center를 확인하세요. 입력값: ${var.cost_center}")
   )
@@ -142,7 +142,7 @@ resource "aws_db_instance" "main" {
   storage_type         = "gp3"
   db_name              = "${var.business_service}db"
   username             = "admin"
-  password = "temppassword123!"  # 실습용 임시 패스워드 - 실제 환경에서는 AWS Secrets Manager 사용
+  password             = "temppassword123!" # 실습용 임시 패스워드 - 실제 환경에서는 AWS Secrets Manager 사용
   skip_final_snapshot  = true
   db_subnet_group_name = aws_db_subnet_group.main[0].name
 
