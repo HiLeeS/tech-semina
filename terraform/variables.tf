@@ -52,7 +52,7 @@ variable "cost_center" {
 }
 
 # =============================================================================
-# 태그-팀 매핑 검증 (team과 cost_center 정합성)
+# 태그-팀 매핑 검증 (team과 cost_center 정합성 - main.tf locals에서 사용)
 # =============================================================================
 
 variable "team_cost_center_map" {
@@ -63,4 +63,38 @@ variable "team_cost_center_map" {
     "loan-team"    = "finops-002"
     "auth-team"    = "finops-003"
   }
+}
+
+# =============================================================================
+# 리소스 스펙 변수 (팀별로 다르게 설정 → Infracost 비용 차이 발생)
+# =============================================================================
+
+variable "ec2_instance_type" {
+  description = "EC2 인스턴스 타입"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "ec2_count" {
+  description = "EC2 인스턴스 수"
+  type        = number
+  default     = 1
+}
+
+variable "enable_rds" {
+  description = "RDS 생성 여부"
+  type        = bool
+  default     = false
+}
+
+variable "rds_instance_class" {
+  description = "RDS 인스턴스 클래스"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "enable_nat_gateway" {
+  description = "NAT Gateway 생성 여부 (비용 발생 리소스)"
+  type        = bool
+  default     = false
 }
