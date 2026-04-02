@@ -69,7 +69,18 @@ jobs:
             --out-file=/tmp/infracost.json
 
       # --------------------------------------------------
-      # 5. PR에 비용 추정 코멘트 게시
+      # 5. 비용 테이블 확인 (디버그용)
+      # --------------------------------------------------
+      - name: Show Infracost Output
+        run: |
+          infracost output \
+            --path=/tmp/infracost-auth.json \
+            --path=/tmp/infracost-loan.json \
+            --path=/tmp/infracost-payment.json \
+            --format=table
+
+      # --------------------------------------------------
+      # 6. PR에 비용 추정 코멘트 게시
       # --------------------------------------------------
       - name: Post Infracost Comment
         run: |
