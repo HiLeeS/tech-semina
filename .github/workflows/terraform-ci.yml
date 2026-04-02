@@ -73,13 +73,20 @@ jobs:
         run: |
           {
             echo "=== auth-team ==="
-            terraform plan -no-color -input=false -var-file="auth.tfvars"
+            terraform plan -no-color -input=false -var-file="auth.tfvars" 2>&1 && echo "✅ auth-team passed" || echo "❌ auth-team failed"
             echo "=== loan-team ==="
-            terraform plan -no-color -input=false -var-file="loan.tfvars"
+            terraform plan -no-color -input=false -var-file="loan.tfvars" 2>&1 && echo "✅ loan-team passed" || echo "❌ loan-team failed"
             echo "=== payment-team ==="
-            terraform plan -no-color -input=false -var-file="payment.tfvars"
-          } 2>&1 | tee /tmp/plan.txt
-          exit ${PIPESTATUS[0]}
+            terraform plan -no-color -input=false -var-file="payment.tfvars" 2>&1 && echo "✅ payment-team passed" || echo "❌ payment-team failed"
+          } 2>&1 | tee /tmp/plan_full.txt
+
+          # 에러 섹션만 추출
+          grep -A 10 "Error:" /tmp/plan_full.txt > /tmp/plan_errors.txt || true
+          # 팀별 결과 요약
+          grep -E "(=== .+ ===|✅|❌)" /tmp/plan_full.txt > /tmp/plan_summary.txt || true
+
+          # 전체 실패 여부 판단
+          grep -q "❌" /tmp/plan_summary.txt && exit 1 || exit 0
         continue-on-error: true
 
       # --------------------------------------------------
@@ -90,7 +97,10 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const planOutput = fs.readFileSync('/tmp/plan.txt', 'utf8');
+            const summary = fs.readFileSync('/tmp/plan_summary.txt', 'utf8');
+            const errors = fs.existsSync('/tmp/plan_errors.txt')
+              ? fs.readFileSync('/tmp/plan_errors.txt', 'utf8')
+              : '';
             const planOutcome = '${{ steps.plan.outcome }}';
             const icon = planOutcome === 'success' ? '✅' : '❌';
 
@@ -98,14 +108,12 @@ jobs:
 
             **Status:** \`${planOutcome}\`
 
-            <details>
-            <summary>Plan 상세 보기</summary>
-
+            ### 팀별 결과
             \`\`\`
-            ${planOutput}
+            ${summary}
             \`\`\`
 
-            </details>
+            ${errors ? `### ❌ 에러 상세\n\`\`\`\n${errors}\n\`\`\`` : ''}
 
             > 🏷️ 태그 validation을 통과해야 Plan이 성공합니다.
             > 허용된 태그 값은 \`variables.tf\`를 확인하세요.`;
