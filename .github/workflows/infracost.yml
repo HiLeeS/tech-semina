@@ -38,7 +38,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
-      # --------------------------------------------------
+# --------------------------------------------------
       # 4. 팀별 비용 분석 및 합산
       # --------------------------------------------------
       - name: Generate Infracost Breakdown
@@ -46,18 +46,21 @@ jobs:
           infracost breakdown \
             --path=terraform \
             --terraform-var-file=auth.tfvars \
+            --project-name="auth-team" \
             --format=json \
             --out-file=/tmp/infracost-auth.json
 
           infracost breakdown \
             --path=terraform \
             --terraform-var-file=loan.tfvars \
+            --project-name="loan-team" \
             --format=json \
             --out-file=/tmp/infracost-loan.json
 
           infracost breakdown \
             --path=terraform \
             --terraform-var-file=payment.tfvars \
+            --project-name="payment-team" \
             --format=json \
             --out-file=/tmp/infracost-payment.json
 
