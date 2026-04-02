@@ -1,0 +1,63 @@
+name: "Infracost - PR Cost Estimation"
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  infracost:
+    name: "Cost Estimation"
+    runs-on: ubuntu-latest
+
+    steps:
+      # --------------------------------------------------
+      # 1. 체크아웃
+      # --------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --------------------------------------------------
+      # 2. Infracost 설치
+      # --------------------------------------------------
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      # --------------------------------------------------
+      # 3. AWS 자격증명
+      # --------------------------------------------------
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # --------------------------------------------------
+      # 4. Infracost Breakdown (현재 비용 분석)
+      # --------------------------------------------------
+      - name: Generate Infracost Breakdown
+        run: |
+          infracost breakdown \
+            --path=terraform \
+            --format=json \
+            --out-file=/tmp/infracost.json
+
+      # --------------------------------------------------
+      # 5. PR에 비용 코멘트 게시
+      # --------------------------------------------------
+      - name: Post Infracost Comment
+        run: |
+          infracost comment github \
+            --path=/tmp/infracost.json \
+            --repo=${{ github.repository }} \
+            --github-token=${{ secrets.GITHUB_TOKEN }} \
+            --pull-request=${{ github.event.pull_request.number }} \
+            --behavior=update
