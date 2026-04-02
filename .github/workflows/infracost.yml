@@ -85,8 +85,11 @@ jobs:
       - name: Post Infracost Comment
         run: |
           infracost comment github \
-            --path=/tmp/infracost.json \
+            --path=/tmp/infracost-auth.json \
+            --path=/tmp/infracost-loan.json \
+            --path=/tmp/infracost-payment.json \
             --repo=${{ github.repository }} \
             --github-token=${{ secrets.GITHUB_TOKEN }} \
             --pull-request=${{ github.event.pull_request.number }} \
-            --behavior=update
+            --behavior=update \
+            --show-all-projects
