@@ -70,7 +70,16 @@ jobs:
       # --------------------------------------------------
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -input=false
+        run: |
+          {
+            echo "=== auth-team ==="
+            terraform plan -no-color -input=false -var-file="auth.tfvars"
+            echo "=== loan-team ==="
+            terraform plan -no-color -input=false -var-file="loan.tfvars"
+            echo "=== payment-team ==="
+            terraform plan -no-color -input=false -var-file="payment.tfvars"
+          } 2>&1 | tee /tmp/plan.txt
+          exit ${PIPESTATUS[0]}
         continue-on-error: true
 
       # --------------------------------------------------
@@ -80,6 +89,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('/tmp/plan.txt', 'utf8');
             const planOutcome = '${{ steps.plan.outcome }}';
             const icon = planOutcome === 'success' ? '✅' : '❌';
 
@@ -91,7 +102,7 @@ jobs:
             <summary>Plan 상세 보기</summary>
 
             \`\`\`
-            ${{ steps.plan.outputs.stdout }}
+            ${planOutput}
             \`\`\`
 
             </details>
