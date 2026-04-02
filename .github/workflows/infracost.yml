@@ -14,14 +14,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # --------------------------------------------------
+      # 1. 체크아웃
+      # --------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
+      # --------------------------------------------------
+      # 2. Infracost 설치 및 인증
+      # --------------------------------------------------
       - name: Setup Infracost
         uses: infracost/actions/setup@v3
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
+      # --------------------------------------------------
+      # 3. AWS 자격증명 (GitHub Secrets 사용)
+      # --------------------------------------------------
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -29,23 +38,26 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
+      # --------------------------------------------------
+      # 4. 팀별 비용 분석 및 합산
+      # --------------------------------------------------
       - name: Generate Infracost Breakdown
         run: |
           infracost breakdown \
             --path=terraform \
-            --terraform-var-file=terraform/auth.tfvars \
+            --terraform-var-file=auth.tfvars \
             --format=json \
             --out-file=/tmp/infracost-auth.json
 
           infracost breakdown \
             --path=terraform \
-            --terraform-var-file=terraform/loan.tfvars \
+            --terraform-var-file=loan.tfvars \
             --format=json \
             --out-file=/tmp/infracost-loan.json
 
           infracost breakdown \
             --path=terraform \
-            --terraform-var-file=terraform/payment.tfvars \
+            --terraform-var-file=payment.tfvars \
             --format=json \
             --out-file=/tmp/infracost-payment.json
 
@@ -56,6 +68,9 @@ jobs:
             --format=json \
             --out-file=/tmp/infracost.json
 
+      # --------------------------------------------------
+      # 5. PR에 비용 추정 코멘트 게시
+      # --------------------------------------------------
       - name: Post Infracost Comment
         run: |
           infracost comment github \
