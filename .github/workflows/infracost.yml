@@ -3,8 +3,6 @@ name: "Infracost - PR Cost Estimation"
 on:
   pull_request:
     branches: [main]
-    paths:
-      - "terraform/**"
 
 permissions:
   contents: read
@@ -16,23 +14,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # --------------------------------------------------
-      # 1. 체크아웃
-      # --------------------------------------------------
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --------------------------------------------------
-      # 2. Infracost 설치
-      # --------------------------------------------------
       - name: Setup Infracost
         uses: infracost/actions/setup@v3
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
-      # --------------------------------------------------
-      # 3. AWS 자격증명
-      # --------------------------------------------------
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -40,19 +29,33 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
 
-      # --------------------------------------------------
-      # 4. Infracost Breakdown (현재 비용 분석)
-      # --------------------------------------------------
       - name: Generate Infracost Breakdown
         run: |
           infracost breakdown \
             --path=terraform \
+            --terraform-var-file=terraform/auth.tfvars \
+            --format=json \
+            --out-file=/tmp/infracost-auth.json
+
+          infracost breakdown \
+            --path=terraform \
+            --terraform-var-file=terraform/loan.tfvars \
+            --format=json \
+            --out-file=/tmp/infracost-loan.json
+
+          infracost breakdown \
+            --path=terraform \
+            --terraform-var-file=terraform/payment.tfvars \
+            --format=json \
+            --out-file=/tmp/infracost-payment.json
+
+          infracost output \
+            --path=/tmp/infracost-auth.json \
+            --path=/tmp/infracost-loan.json \
+            --path=/tmp/infracost-payment.json \
             --format=json \
             --out-file=/tmp/infracost.json
 
-      # --------------------------------------------------
-      # 5. PR에 비용 코멘트 게시
-      # --------------------------------------------------
       - name: Post Infracost Comment
         run: |
           infracost comment github \
