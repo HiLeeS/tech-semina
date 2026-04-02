@@ -45,19 +45,19 @@ jobs:
         run: |
           infracost breakdown \
             --path=terraform \
-            --terraform-var-file=terraform/auth.tfvars \
+            --terraform-var-file=auth.tfvars \
             --format=json \
             --out-file=/tmp/infracost-auth.json
 
           infracost breakdown \
             --path=terraform \
-            --terraform-var-file=terraform/loan.tfvars \
+            --terraform-var-file=loan.tfvars \
             --format=json \
             --out-file=/tmp/infracost-loan.json
 
           infracost breakdown \
             --path=terraform \
-            --terraform-var-file=terraform/payment.tfvars \
+            --terraform-var-file=payment.tfvars \
             --format=json \
             --out-file=/tmp/infracost-payment.json
 
