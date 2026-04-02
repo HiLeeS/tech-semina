@@ -6,7 +6,7 @@
 aws_region       = "ap-northeast-2"
 business_service = "payment"
 team             = "payment-team"
-environment      = "prod"
+environment = "production"   # prod → production 으로 변경(ci-test)
 cost_center      = "finops-001"
 
 # 리소스 스펙
