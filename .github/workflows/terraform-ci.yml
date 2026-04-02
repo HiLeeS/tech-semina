@@ -1,0 +1,114 @@
+name: "Terraform CI - Tag Validation"
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_WORKING_DIR: terraform
+
+jobs:
+  terraform-validate:
+    name: "Validate & Plan"
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    steps:
+      # --------------------------------------------------
+      # 1. 체크아웃
+      # --------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # --------------------------------------------------
+      # 2. Terraform 설치
+      # --------------------------------------------------
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      # --------------------------------------------------
+      # 3. AWS 자격증명 (GitHub Secrets 사용)
+      # --------------------------------------------------
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # --------------------------------------------------
+      # 4. Terraform Init
+      # --------------------------------------------------
+      - name: Terraform Init
+        run: terraform init
+
+      # --------------------------------------------------
+      # 5. Terraform Format 검사
+      # --------------------------------------------------
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      # --------------------------------------------------
+      # 6. Terraform Validate (태그 validation 포함)
+      # --------------------------------------------------
+      - name: Terraform Validate
+        run: terraform validate
+
+      # --------------------------------------------------
+      # 7. Terraform Plan
+      # --------------------------------------------------
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: true
+
+      # --------------------------------------------------
+      # 8. PR에 Plan 결과 코멘트
+      # --------------------------------------------------
+      - name: Comment Plan Result on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const planOutcome = '${{ steps.plan.outcome }}';
+            const icon = planOutcome === 'success' ? '✅' : '❌';
+
+            const body = `## ${icon} Terraform Plan 결과
+
+            **Status:** \`${planOutcome}\`
+
+            <details>
+            <summary>Plan 상세 보기</summary>
+
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            </details>
+
+            > 🏷️ 태그 validation을 통과해야 Plan이 성공합니다.
+            > 허용된 태그 값은 \`variables.tf\`를 확인하세요.`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      # --------------------------------------------------
+      # 9. Plan 실패 시 워크플로우 실패 처리
+      # --------------------------------------------------
+      - name: Fail if Plan Failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
