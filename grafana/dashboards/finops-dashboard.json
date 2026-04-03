@@ -1,0 +1,183 @@
+{
+  "title": "FinOps — 팀별 클라우드 비용 현황",
+  "uid": "finops-cost-overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "panels": [
+    {
+      "id": 1,
+      "title": "팀별 월간 총 비용 (Bar chart)",
+      "type": "barchart",
+      "gridPos": { "h": 9, "w": 14, "x": 0, "y": 0 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "FinOps-CSV" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "currencyUSD" },
+        "overrides": []
+      },
+      "options": {
+        "xField": "team", "barWidth": 0.6, "orientation": "auto",
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      },
+      "transformations": [
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "team": { "aggregations": [], "operation": "groupby" },
+              "cost_usd": { "aggregations": ["sum"], "operation": "aggregate" }
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "type": "csv",
+          "source": "url",
+          "url": "http://csv-server/cost_data.csv",
+          "url_options": { "method": "GET" },
+          "columns": [
+            { "selector": "team", "text": "team", "type": "string" },
+            { "selector": "cost_usd", "text": "cost_usd", "type": "number" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "팀별 비용 비중 (Pie chart)",
+      "type": "piechart",
+      "gridPos": { "h": 9, "w": 10, "x": 14, "y": 0 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "FinOps-CSV" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "currencyUSD" },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "pie",
+        "displayLabels": ["name", "percent"],
+        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "values": ["value", "percent"] },
+        "tooltip": { "mode": "single", "sort": "none" },
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": true
+        }
+      },
+      "transformations": [
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "team": { "aggregations": [], "operation": "groupby" },
+              "cost_usd": { "aggregations": ["sum"], "operation": "aggregate" }
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "type": "csv",
+          "source": "url",
+          "url": "http://csv-server/cost_data.csv",
+          "url_options": { "method": "GET" },
+          "columns": [
+            { "selector": "team", "text": "team", "type": "string" },
+            { "selector": "cost_usd", "text": "cost_usd", "type": "number" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "리소스 타입별 비용 비중 (Donut chart)",
+      "type": "piechart",
+      "gridPos": { "h": 9, "w": 10, "x": 0, "y": 9 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "FinOps-CSV" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "currencyUSD" },
+        "overrides": []
+      },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "percent"],
+        "legend": { "displayMode": "table", "placement": "right", "showLegend": true, "values": ["value", "percent"] },
+        "tooltip": { "mode": "single", "sort": "none" },
+        "reduceOptions": {
+          "calcs": ["sum"],
+          "fields": "",
+          "values": true
+        }
+      },
+      "transformations": [
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "resource_type": { "aggregations": [], "operation": "groupby" },
+              "cost_usd": { "aggregations": ["sum"], "operation": "aggregate" }
+            }
+          }
+        }
+      ],
+      "targets": [
+        {
+          "refId": "A",
+          "type": "csv",
+          "source": "url",
+          "url": "http://csv-server/cost_data.csv",
+          "url_options": { "method": "GET" },
+          "columns": [
+            { "selector": "resource_type", "text": "resource_type", "type": "string" },
+            { "selector": "cost_usd", "text": "cost_usd", "type": "number" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "비용 상세 테이블",
+      "type": "table",
+      "gridPos": { "h": 9, "w": 14, "x": 10, "y": 9 },
+      "datasource": { "type": "yesoreyeram-infinity-datasource", "uid": "FinOps-CSV" },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "cost_usd" }, "properties": [
+            { "id": "displayName", "value": "비용 (USD)" },
+            { "id": "unit", "value": "currencyUSD" },
+            { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 300 }] } },
+            { "id": "custom.cellOptions", "value": { "type": "color-background" } }
+          ]},
+          { "matcher": { "id": "byName", "options": "date" }, "properties": [{ "id": "displayName", "value": "날짜" }] },
+          { "matcher": { "id": "byName", "options": "team" }, "properties": [{ "id": "displayName", "value": "팀" }] },
+          { "matcher": { "id": "byName", "options": "environment" }, "properties": [{ "id": "displayName", "value": "환경" }] },
+          { "matcher": { "id": "byName", "options": "resource_type" }, "properties": [{ "id": "displayName", "value": "리소스" }] },
+          { "matcher": { "id": "byName", "options": "business_service" }, "properties": [{ "id": "displayName", "value": "서비스" }] },
+          { "matcher": { "id": "byName", "options": "cost_center" }, "properties": [{ "id": "displayName", "value": "비용센터" }] }
+        ]
+      },
+      "options": { "showHeader": true },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "csv",
+          "source": "url",
+          "url": "http://csv-server/cost_data.csv",
+          "url_options": { "method": "GET" },
+          "columns": [
+            { "selector": "date", "text": "date", "type": "string" },
+            { "selector": "team", "text": "team", "type": "string" },
+            { "selector": "business_service", "text": "business_service", "type": "string" },
+            { "selector": "environment", "text": "environment", "type": "string" },
+            { "selector": "cost_center", "text": "cost_center", "type": "string" },
+            { "selector": "resource_type", "text": "resource_type", "type": "string" },
+            { "selector": "cost_usd", "text": "cost_usd", "type": "number" }
+          ]
+        }
+      ]
+    }
+  ]
+}

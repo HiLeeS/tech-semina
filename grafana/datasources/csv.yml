@@ -1,0 +1,9 @@
+apiVersion: 1
+
+datasources:
+  - name: FinOps-CSV
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    isDefault: true
+    version: 1
+    editable: true

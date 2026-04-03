@@ -2,18 +2,26 @@ version: "3.8"
 
 services:
   grafana:
-    image: grafana/grafana:11.0.0
+    image: grafana/grafana:10.2.3
     container_name: finops-grafana
     ports:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=finops123
-      - GF_INSTALL_PLUGINS=marcusolsson-csv-datasource
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
     volumes:
       - ./data:/var/lib/grafana/csv
       - ./dashboards:/etc/grafana/provisioning/dashboards
+      - ./datasources:/etc/grafana/provisioning/datasources
       - grafana-storage:/var/lib/grafana
+    restart: unless-stopped
+
+  csv-server:
+    image: nginx:alpine
+    container_name: finops-csv-server
+    volumes:
+      - ./data:/usr/share/nginx/html
     restart: unless-stopped
 
 volumes:
