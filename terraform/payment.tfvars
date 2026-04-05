@@ -6,7 +6,7 @@
 aws_region       = "ap-northeast-2"
 business_service = "payment"
 team             = "payment-team"
-environment      = "prod"
+environment      = "production"     # prod, ci 실패용 테스트
 cost_center      = "finops-001"
 
 # 리소스 스펙
